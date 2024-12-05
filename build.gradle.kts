@@ -25,6 +25,7 @@ plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.dokka)
     jacoco
+    id("org.jetbrains.kotlinx.kover") version "0.8.3"
 }
 
 val dependenciesProject = project(":wow-dependencies")
@@ -219,3 +220,32 @@ nexusPublishing {
 }
 
 fun getPropertyOf(name: String) = project.properties[name]?.toString()
+
+kover {
+    merge {
+        subprojects { true }
+    }
+}
+
+tasks.register("benchmarkReport") {
+    group = "Custom Tasks"
+    description = "Runs koverHtmlReport while skipping specific test tasks"
+
+    doLast {
+        println("Running koverHtmlReport with specific exclusions...")
+
+        exec {
+            commandLine = listOf(
+                "./gradlew",
+                "koverXmlReport",
+                "-x", ":wow-redis:test",
+                "-x", ":wow-mongo:test",
+                "-x", ":wow-r2dbc:test",
+                "-x", ":wow-spring-boot-starter:test",
+                "-x", ":wow-kafka:test",
+                "-x", ":wow-elasticsearch:test",
+                "-x", ":wow-it:test"
+            )
+        }
+    }
+}
